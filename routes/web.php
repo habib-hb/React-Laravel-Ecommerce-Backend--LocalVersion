@@ -4,6 +4,9 @@ use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+// use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
@@ -81,6 +84,16 @@ Route::post('api/dashboard/product-upload', function(Request $request){
                     'stock_amount' => $product_stock,
                 ]);
 
+                //Product Images and variant operation
+                foreach($product_images as $key => $image){
+                    DB::table('product_image_and_color')->insert([
+                        'product_id' => $product_database,
+                        'image' => 'http://127.0.0.1:8000' . $image,
+                        'color_name' => $product_variants[$key],
+                        'color_code' => $product_color_placeholder,
+                    ]);
+                }
+
 
 
 
@@ -90,4 +103,17 @@ Route::post('api/dashboard/product-upload', function(Request $request){
 
         // When file is not uploaded
         return response()->json(['message' => 'No files were uploaded'], 400);
+});
+
+
+Route::get('/storage/images/{file_name}', function ($file_name) {
+    $path = storage_path('app/public/images/' . $file_name);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    $file = File::get($path);
+    $type = File::mimeType($path);
+    $response = Response::make($file, 200);
+    $response->header("Content-Type", $type);
+    return $response;
 });
