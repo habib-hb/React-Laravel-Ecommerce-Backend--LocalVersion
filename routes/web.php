@@ -154,23 +154,23 @@ Route::post('api/dashboard/review-upload', function(Request $request){
         }
 
         //DB update or insert if the user doesn't exist
-        $availability_checking = DB::select('SELECT * from product_reviewers WHERE reviewer_id = ?', [$request->user_id]);
+        $availability_checking = DB::select('SELECT * from product_customers WHERE customer_id = ?', [$request->user_id]);
 
         if(count($availability_checking) == 0){
-            $review_image_url ? DB::table('product_reviewers')->insert([
-                    'reviewer_name' => $request->name,
-                    'reviewer_id' => $request->user_id,
-                    'reviewer_avatar' => 'http://127.0.0.1:8000' . $review_image_url,
-                ]) : DB::table('product_reviewers')->insert([
-                    'reviewer_name' => $request->name,
-                    'reviewer_id' => $request->user_id,
+            $review_image_url ? DB::table('product_customers')->insert([
+                    'customer_name' => $request->name,
+                    'customer_id' => $request->user_id,
+                    'customer_avatar' => 'http://127.0.0.1:8000' . $review_image_url,
+                ]) : DB::table('product_customers')->insert([
+                    'customer_name' => $request->name,
+                    'customer_id' => $request->user_id,
                 ]);
              }
         else{
 
-           $review_image_url ? DB::table('product_reviewers')->where('reviewer_id', $request->user_id)->update([
-                'reviewer_name' => $request->name,
-                'reviewer_avatar' => 'http://127.0.0.1:8000' . $review_image_url,
+           $review_image_url ? DB::table('product_customers')->where('customer_id', $request->user_id)->update([
+                'customer_name' => $request->name,
+                'customer_avatar' => 'http://127.0.0.1:8000' . $review_image_url,
             ]) : null;
 
         }
@@ -178,9 +178,9 @@ Route::post('api/dashboard/review-upload', function(Request $request){
         //DB operation for the review insertion
         DB::table('product_reviews')->insert([
             'product_id' => intval($request->product_id),
-            'reviewer_name' => $request->name,
+            'customer_name' => $request->name,
             'review' => $request->review_text,
-            'reviewer_id' => $request->user_id,
+            'customer_id' => $request->user_id,
             'rating' => intval($request->selected_stars),
         ]);
 
