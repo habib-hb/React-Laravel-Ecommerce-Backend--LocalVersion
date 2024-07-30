@@ -17,7 +17,7 @@ Route::get('/', function () {
 
 // Getting Product Data From DB
 Route::get('api/products' , function(){
-    $product = DB::select('SELECT * FROM products LEFT JOIN product_category ON products.id = product_category.product_id LEFT JOIN product_image_and_color ON products.id = product_image_and_color.product_id LEFT JOIN product_reviews ON products.id = product_reviews.product_id LEFT JOIN product_stock ON products.id = product_stock.product_id LEFT JOIN product_reviewers ON product_reviews.reviewer_id = product_reviewers.id');
+    $product = DB::select('SELECT * FROM products LEFT JOIN product_category ON products.id = product_category.product_id LEFT JOIN product_image_and_color ON products.id = product_image_and_color.product_id LEFT JOIN product_reviews ON products.id = product_reviews.product_id LEFT JOIN product_stock ON products.id = product_stock.product_id LEFT JOIN product_customers ON product_reviews.customer_id = product_customers.customer_id');
     return response(Json::encode($product));
 });
 
@@ -185,5 +185,9 @@ Route::post('api/dashboard/review-upload', function(Request $request){
         ]);
 
 
-        return response()->json(['message' => 'File uploaded successfully'], 200);
+        // Extracting the image url from DB
+       $image_for_javascript = DB::select('SELECT customer_avatar FROM product_customers WHERE customer_id = ?', [$request->user_id]);
+
+
+        return response()->json(['message' => 'File uploaded successfully' , 'image_url_javascript' => $image_for_javascript[0]->customer_avatar , 'user_name' => $request->name, 'rating' => $request->selected_stars, 'review_text' => $request->review_text], 200);
 });
