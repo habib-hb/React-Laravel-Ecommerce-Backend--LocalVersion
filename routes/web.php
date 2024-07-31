@@ -1,13 +1,16 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 // use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Socialite\Facades\Socialite;
 
 Route::get('/', function () {
     return view('welcome');
@@ -190,5 +193,32 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
 
         return response()->json(['message' => 'File uploaded successfully' , 'image_url_javascript' => $image_for_javascript[0]->customer_avatar , 'user_name' => $request->name, 'rating' => $request->selected_stars, 'review_text' => $request->review_text], 200);
-});
 
+    });
+
+
+
+        // Github Login
+        Route::get('/auth/redirect', function () {
+            return Socialite::driver('github')->redirect();
+        });
+
+        Route::get('/auth/callback', function () {
+            $githubUser = Socialite::driver('github')->user();
+
+            $user = User::updateOrCreate([
+                // 'github_id' => $githubUser->id,
+                'email' => $githubUser->email
+            ], [
+                'name' => $githubUser->name,
+                // 'github_id' => $githubUser->id,
+                // 'email' => $githubUser->email,
+                'remember_token' => 'wow again',
+                // 'github_refresh_token' => $githubUser->refreshToken,
+                'password' => 'random_password'
+            ]);
+
+            Auth::login($user);
+
+            return redirect('http://localhost:3000/');
+        });
