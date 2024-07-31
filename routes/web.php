@@ -191,3 +191,4 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
         return response()->json(['message' => 'File uploaded successfully' , 'image_url_javascript' => $image_for_javascript[0]->customer_avatar , 'user_name' => $request->name, 'rating' => $request->selected_stars, 'review_text' => $request->review_text], 200);
 });
+
