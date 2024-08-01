@@ -253,3 +253,34 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
 
         });
+
+
+
+    // The user data extraction
+    Route::post('/api/user_data_retrive' , function(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+          // Retrieve the email from the request
+    $email = $request->email;
+
+    // Find the user by email
+    $user = User::where('email', $email)->first();
+
+    // Check if the user exists
+    if ($user) {
+        // Return the user's data as a JSON response
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    } else {
+        // Return an error message if the user does not exist
+        return response()->json([
+            'success' => false,
+            'message' => 'User not found'
+        ], 404);
+    }
+
+    });
