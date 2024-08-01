@@ -206,19 +206,50 @@ Route::post('api/dashboard/review-upload', function(Request $request){
         Route::get('/auth/callback', function () {
             $githubUser = Socialite::driver('github')->user();
 
-            $user = User::updateOrCreate([
+            $user = User::firstOrCreate([
                 // 'github_id' => $githubUser->id,
                 'email' => $githubUser->email
             ], [
                 'name' => $githubUser->name,
                 // 'github_id' => $githubUser->id,
                 // 'email' => $githubUser->email,
-                'remember_token' => 'wow again',
+                // 'remember_token' => 'wow again',
                 // 'github_refresh_token' => $githubUser->refreshToken,
                 'password' => 'random_password'
             ]);
 
-            Auth::login($user);
+            Auth::login($user , true);
 
-            return redirect('http://localhost:3000/');
+            // return redirect('http://localhost:3000/');
+            return redirect('http://127.0.0.1:8000/');
+            // return redirect('/');
+        });
+
+
+
+        // Logging In Users with Credentials
+        Route::post('auth/user/create', function (Request $request) {
+
+            $request->validate([
+                'name' => 'required',
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
+
+
+            // Creating The User
+            $user = User::firstOrCreate([
+                'email' => $request->email
+            ], [
+                'name' => $request->name,
+                'password' => bcrypt($request->password),
+            ]);
+
+
+
+            // Logging the user in
+            Auth::login($user , true);
+            return redirect('http://127.0.0.1:8000/');
+
+
         });
