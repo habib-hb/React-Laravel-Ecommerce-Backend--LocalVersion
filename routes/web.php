@@ -221,7 +221,8 @@ Route::post('api/dashboard/review-upload', function(Request $request){
             Auth::login($user , true);
 
             // return redirect('http://localhost:3000/');
-            return redirect('http://127.0.0.1:8000/');
+            return redirect('http://localhost:3000/github-login/' . $user->id);
+            // return redirect('http://127.0.0.1:8000/');
             // return redirect('/');
         });
 
@@ -282,5 +283,21 @@ Route::post('api/dashboard/review-upload', function(Request $request){
             'message' => 'User not found'
         ], 404);
     }
+
+    });
+
+
+
+    // Getting the user Email data
+    Route::post('api/get_github_info', function (Request $request) {
+
+        $request->validate([
+            'laravel_id' => 'required',
+        ]);
+
+
+        $user = User::where('id', $request->laravel_id)->first();
+        
+        return response()->json(['email' => $user->email], 200);
 
     });
