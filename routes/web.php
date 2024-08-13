@@ -120,6 +120,101 @@ Route::post('api/dashboard/product-upload', function(Request $request){
 });
 
 
+
+// Product Update Post Request -- not completed yet
+Route::post('api/dashboard/product_update', function(Request $request){
+
+    // These variables will get filled through the foreach loop below
+    $product_images = [];
+    $product_variants = [];
+
+
+if($request->hasFile('images')){
+    foreach($request->file('images') as $file){
+
+        // $file_name = time() . "-" . $file->getClientOriginalName();
+
+        // Get the file name without extension
+        $file_name_with_extension = $file->getClientOriginalName();
+        $file_name = pathinfo($file_name_with_extension, PATHINFO_FILENAME);
+
+        // Store the file
+        $file_path = $file->storeAs('images', $file_name_with_extension, 'public');
+
+        // Generate the URL
+        $url = Storage::url($file_path);
+
+        // Add the URL to the array
+        $product_images[] = $url;
+
+        // Add the file name to the array
+        $product_variants[] = $file_name;
+
+
+    }
+
+}
+
+
+    $product_id = $request->product_id;
+    $product_name = $request->product_name;
+    $product_description = $request->description;
+    $product_price = $request->price;
+    $product_category = $request->category;
+    $product_brand = $request->brand;
+    $product_stock = $request->instock_amount;
+    $product_color_placeholder = "#ff2245";
+
+
+
+    // *** The Database operations
+        $product_database = DB::table('products')
+        ->where('id', $product_id)
+        ->update([
+            'name' => $product_name,
+            'description' => $product_description,
+            'price' => $product_price,
+            'brand' => $product_brand,
+        ]);
+
+
+        $product_category_database = DB::table('product_category')->where('product_id', $product_id)->update([
+            'category' => $product_category,
+        ]);
+
+        $product_stock_database = DB::table('product_stock')->where('product_id', $product_id)->update([
+            'stock_amount' => $product_stock,
+        ]);
+
+        //Product Images and variant operation
+        if(count($product_images) != 0){
+            //Delete the old images
+            DB::table('product_image_and_color')->where('product_id', $product_id)->delete();
+
+            //New Product Images and variant insertion operation
+            foreach($product_images as $key => $image){
+                DB::table('product_image_and_color')->insert([
+                    'product_id' => $product_id,
+                    'image' => 'http://127.0.0.1:8000' . $image,
+                    'color_name' => $product_variants[$key],
+                    'color_code' => $product_color_placeholder,
+                ]);
+        }
+    }
+
+
+
+
+    return response()->json(['message' => 'Files uploaded successfully'], 200);
+
+
+
+// When file is not uploaded
+return response()->json(['message' => 'No files were uploaded'], 400);
+});
+
+
+
 Route::get('/storage/images/{file_name}', function ($file_name) {
     $path = storage_path('app/public/images/' . $file_name);
     if (!file_exists($path)) {
