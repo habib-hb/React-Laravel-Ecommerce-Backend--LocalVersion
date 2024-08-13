@@ -161,8 +161,10 @@ Route::post('api/dashboard/review-upload', function(Request $request){
         $review_image = $request->review_image;
         $review_image_name = time() . "--" . $review_image->getClientOriginalName();
         $review_image->storeAs('images', $review_image_name, 'public');
+
         // Review Image Url
         $review_image_url = Storage::url('images/' . $review_image_name);
+
         // Review Image Name without extension
         $review_image_name_without_extension = pathinfo($review_image_name, PATHINFO_FILENAME);
         }
@@ -249,13 +251,20 @@ Route::post('api/dashboard/review-upload', function(Request $request){
             ]);
 
 
-            // Creating The User
-            $user = User::firstOrCreate([
-                'email' => $request->email
-            ], [
-                'name' => $request->name,
-                'password' => bcrypt($request->password),
-            ]);
+            // Creating The User Conditionally
+                //Checking if the user already exists
+                $availability_checking = DB::select('SELECT * from users WHERE email = ?', [$request->email]);
+
+                if(count($availability_checking) == 0){
+                    $user = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => bcrypt($request->password),
+                ]);
+
+            }else{
+                return response()->json(['message' => 'User With This Email Already Exists'], 400);
+            }
 
 
 
@@ -321,6 +330,58 @@ Route::post('api/dashboard/review-upload', function(Request $request){
         $user = User::where('id', $request->laravel_id)->first();
 
         return response()->json(['email' => $user->email], 200);
+
+    });
+
+
+    // User's profile picture upload
+    Route::post('api/dashboard/profile_picture_upload' , function(Request $request){
+
+        $request->validate([
+            'user_email' => 'required',
+            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $profile_picture = $request->profile_picture;
+        $profile_picture_name = time() . "--" . $profile_picture->getClientOriginalName();
+        $profile_picture->storeAs('images', $profile_picture_name, 'public');
+            // $profile_picture_url = asset('storage/images/' . $profile_picture_name);
+
+        // Profile Picture Url
+        $profile_picture_storage_url = Storage::url('images/' . $profile_picture_name);
+
+        // Profile Picture Full Url
+            $profile_picture_full_url = asset($profile_picture_storage_url);
+        // $profile_picture_full_url = 'http://127.0.0.1:8000' . $profile_picture_storage_url;
+
+        // Finding the user from the Email
+        $user_details = User::where('email', $request->user_email)->first();
+
+        // Creating or Updating Customer data From User data
+        $existingCustomer = DB::table('product_customers')
+        ->where('customer_id', $user_details->id)
+        ->first();
+
+            if ($existingCustomer) {
+                // Update the existing record
+                DB::table('product_customers')
+                    ->where('customer_id', $user_details->id)
+                    ->update([
+                        'customer_name' => $user_details->name,
+                        'customer_avatar' => $profile_picture_full_url,
+                    ]);
+            } else {
+                // Insert a new record
+                DB::table('product_customers')
+                    ->insert([
+                        'customer_id' => $user_details->id,
+                        'customer_name' => $user_details->name,
+                        'customer_avatar' => $profile_picture_full_url,
+                    ]);
+            }
+
+
+        return response()->json(['profile_picture_full_url' => $profile_picture_full_url], 200);
 
     });
 
