@@ -282,11 +282,22 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
     // Check if the user exists
     if ($user) {
+
+        $avatar = DB::select('SELECT customer_avatar FROM product_customers WHERE customer_id = ?', [$user->id]);
         // Return the user's data as a JSON response
-        return response()->json([
-            'success' => true,
-            'data' => $user
-        ]);
+
+        if($avatar){
+            return response()->json([
+                'success' => true,
+                'data' => $user,
+                'avatar' => $avatar[0]->customer_avatar,
+            ]);
+        }else{
+            return response()->json([
+                'success' => true,
+                'data' => $user,
+            ]);
+        }
     } else {
         // Return an error message if the user does not exist
         return response()->json([
