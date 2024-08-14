@@ -13,13 +13,36 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
 
+
+
+
+
+
+
+
+
+
 Route::get('/', function () {
     return view('welcome');
 });
 
+
+
+
+
+
+
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+
+
+
+
+
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -29,11 +52,25 @@ Route::middleware('auth')->group(function () {
 
 
 
+
+
+
+
+
+
+
 // Getting Product Data From DB
 Route::get('api/products' , function(){
     $product = DB::select('SELECT * FROM products LEFT JOIN product_category ON products.id = product_category.product_id LEFT JOIN product_image_and_color ON products.id = product_image_and_color.product_id LEFT JOIN product_reviews ON products.id = product_reviews.product_id LEFT JOIN product_stock ON products.id = product_stock.product_id LEFT JOIN product_customers ON product_reviews.customer_id = product_customers.customer_id');
     return response(Json::encode($product));
 });
+
+
+
+
+
+
+
 
 
 
@@ -65,7 +102,6 @@ Route::post('api/dashboard/product-upload', function(Request $request){
 
                 // Add the file name to the array
                 $product_variants[] = $file_name;
-
 
             }
 
@@ -108,16 +144,19 @@ Route::post('api/dashboard/product-upload', function(Request $request){
                     ]);
                 }
 
-
-
-
             return response()->json(['message' => 'Files uploaded successfully'], 200);
 
         }
 
         // When file is not uploaded
         return response()->json(['message' => 'No files were uploaded'], 400);
-});
+        });
+
+
+
+
+
+
 
 
 
@@ -129,7 +168,7 @@ Route::post('api/dashboard/product_update', function(Request $request){
     $product_variants = [];
 
 
-if($request->hasFile('images')){
+    if($request->hasFile('images')){
     foreach($request->file('images') as $file){
 
         // $file_name = time() . "-" . $file->getClientOriginalName();
@@ -151,9 +190,9 @@ if($request->hasFile('images')){
         $product_variants[] = $file_name;
 
 
-    }
+        }
 
-}
+    }
 
 
     $product_id = $request->product_id;
@@ -202,19 +241,43 @@ if($request->hasFile('images')){
         }
     }
 
-
-
-
     return response()->json(['message' => 'Files uploaded successfully'], 200);
 
 
+    // When file is not uploaded
+    return response()->json(['message' => 'No files were uploaded'], 400);
+    });
 
-// When file is not uploaded
-return response()->json(['message' => 'No files were uploaded'], 400);
+
+
+
+
+
+
+
+
+// Deleting the specified product
+Route::get('api/dashboard/product_delete/{id}', function($id){
+
+    DB::table('products')->where('id', $id)->delete();
+    DB::table('product_category')->where('product_id', $id)->delete();
+    DB::table('product_stock')->where('product_id', $id)->delete();
+    DB::table('product_image_and_color')->where('product_id', $id)->delete();
+    DB::table('product_reviews')->where('product_id', $id)->delete();
+
+        //    // Redirect to the delete panel
+        //    return redirect('http://localhost:3000/product_delete');
+    return response()->json(['message' => 'Product deleted successfully'], 200);
+
 });
 
 
 
+
+
+
+
+// Loading Images from the storage -aka- Backend
 Route::get('/storage/images/{file_name}', function ($file_name) {
     $path = storage_path('app/public/images/' . $file_name);
     if (!file_exists($path)) {
@@ -226,6 +289,12 @@ Route::get('/storage/images/{file_name}', function ($file_name) {
     $response->header("Content-Type", $type);
     return $response;
 });
+
+
+
+
+
+
 
 
 
@@ -306,8 +375,14 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
 
 
-        // Github Login
-        Route::get('/auth/redirect', function () {
+
+
+
+
+
+
+// Github Login
+Route::get('/auth/redirect', function () {
             return Socialite::driver('github')->redirect();
         });
 
@@ -336,8 +411,14 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
 
 
-        // Logging In Users with Credentials
-        Route::post('auth/user/create', function (Request $request) {
+
+
+
+
+
+
+// Logging In Users with Credentials
+Route::post('auth/user/create', function (Request $request) {
 
             $request->validate([
                 'name' => 'required',
@@ -372,8 +453,14 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
 
 
-    // The user data extraction
-    Route::post('/api/user_data_retrive' , function(Request $request){
+
+
+
+
+
+
+// The user data extraction
+Route::post('/api/user_data_retrive' , function(Request $request){
         $request->validate([
             'email' => 'required|email',
         ]);
@@ -414,8 +501,14 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
 
 
-    // Getting the user Email data
-    Route::post('api/get_github_info', function (Request $request) {
+
+
+
+
+
+
+// Getting the user Email data
+Route::post('api/get_github_info', function (Request $request) {
 
         $request->validate([
             'laravel_id' => 'required',
@@ -429,8 +522,14 @@ Route::post('api/dashboard/review-upload', function(Request $request){
     });
 
 
-    // User's profile picture upload
-    Route::post('api/dashboard/profile_picture_upload' , function(Request $request){
+
+
+
+
+
+
+// User's profile picture upload
+Route::post('api/dashboard/profile_picture_upload' , function(Request $request){
 
         $request->validate([
             'user_email' => 'required',
@@ -480,6 +579,28 @@ Route::post('api/dashboard/review-upload', function(Request $request){
 
     });
 
+
+
+
+
+
+
+
+
+
+// Route::post('api/dashboard/product_edit', function(Request $request){
+//         $request->validate([
+//             'product_id' => 'required',
+//         ]);
+
+//         $product_id = $request->product_id;
+//         $product_name = $request->product_name;
+//         $product_description = $request->description;
+//         $product_price = $request->price;
+//         $product_category = $request->category;
+//         $product_brand = $request->brand;
+//         $product_instock_amount = $request->instock_amount;
+//     });
 
 
 require __DIR__.'/auth.php';
