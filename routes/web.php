@@ -588,19 +588,12 @@ Route::post('api/dashboard/profile_picture_upload' , function(Request $request){
 
 
 
-// Route::post('api/dashboard/product_edit', function(Request $request){
-//         $request->validate([
-//             'product_id' => 'required',
-//         ]);
+Route::get('api/dashboard/comment_delete/{comment_id}' , function($comment_id){
 
-//         $product_id = $request->product_id;
-//         $product_name = $request->product_name;
-//         $product_description = $request->description;
-//         $product_price = $request->price;
-//         $product_category = $request->category;
-//         $product_brand = $request->brand;
-//         $product_instock_amount = $request->instock_amount;
-//     });
+    DB::table('product_reviews')->where('review_id', $comment_id)->delete();
+    return response()->json(['message' => 'Comment deleted successfully'], 200);
+
+});
 
 
 require __DIR__.'/auth.php';
