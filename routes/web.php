@@ -596,4 +596,34 @@ Route::get('api/dashboard/comment_delete/{comment_id}' , function($comment_id){
 });
 
 
+
+
+
+
+
+
+
+Route::get('api/customers' , function(){
+    $customer = DB::select('SELECT * FROM product_customers LEFT JOIN users ON product_customers.customer_id = users.id');
+    return response(Json::encode($customer));
+});
+
+
+
+
+
+
+
+
+
+Route::get('api/dashboard/customer_delete/{customer_id}' , function($customer_id){
+
+    DB::table('product_customers')->where('customer_id', $customer_id)->delete();
+    DB::table('users')->where('id', $customer_id)->delete();
+
+
+    return response()->json(['message' => 'Customer deleted successfully'], 200);
+});
+
+
 require __DIR__.'/auth.php';
