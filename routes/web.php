@@ -77,6 +77,11 @@ Route::get('api/products' , function(){
 // Product Upload Post Request -- not completed yet
 Route::post('api/dashboard/product-upload', function(Request $request){
 
+            // Admin Check through session data
+            $admin_check = session()->get('admin');
+
+            if($admin_check !== null){
+
             // These variables will get filled through the foreach loop below
             $product_images = [];
             $product_variants = [];
@@ -146,10 +151,16 @@ Route::post('api/dashboard/product-upload', function(Request $request){
 
             return response()->json(['message' => 'Files uploaded successfully'], 200);
 
+
+
         }
 
         // When file is not uploaded
         return response()->json(['message' => 'No files were uploaded'], 400);
+
+    }else{
+        return response()->json(['message' => 'Admin not found. Thus the upload request has been denied.'], 200);
+    }
         });
 
 
@@ -403,6 +414,15 @@ Route::get('/auth/redirect', function () {
 
             Auth::login($user , true);
 
+            // Doing Admin confirmation based on email address
+            $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$githubUser->email]);
+
+            if(count($admin_check) > 0){
+               // Setting Session
+                session(['admin' => $githubUser->email]);
+
+            }
+
             // return redirect('http://localhost:3000/');
             return redirect('http://localhost:3000/github-login/' . $user->id);
             // return redirect('http://127.0.0.1:8000/');
@@ -417,7 +437,7 @@ Route::get('/auth/redirect', function () {
 
 
 
-// Logging In Users with Credentials
+// Signing In Users with Credentials
 Route::post('auth/user/create', function (Request $request) {
 
             $request->validate([
@@ -446,6 +466,16 @@ Route::post('auth/user/create', function (Request $request) {
 
             // Logging the user in
             Auth::login($user , true);
+
+            // Doing Admin confirmation based on email address
+            $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$request->email]);
+
+            if(count($admin_check) > 0){
+               // Setting Session
+                session(['admin' => $request->email]);
+
+            }
+
             return redirect('http://127.0.0.1:8000/');
 
 
@@ -623,6 +653,46 @@ Route::get('api/dashboard/customer_delete/{customer_id}' , function($customer_id
 
 
     return response()->json(['message' => 'Customer deleted successfully'], 200);
+});
+
+
+
+
+
+
+
+
+
+
+Route::post('api/logout', function (Request $request) {
+    $request->validate([
+        'email' => 'required',
+    ]);
+
+
+    $user = User::where('email', $request->email)->first();
+
+    if($user){
+
+        // Checking if the user is an Admin or not
+        $admin_check= DB::select('SELECT * from admins WHERE admin_email = ?', [$request->email]);
+
+        if(count($admin_check) > 0){
+
+            // Deleting Session
+            session()->forget('admin');
+
+            return response()->json(['message' => 'Admin logged out successfully. The user Id of the Admin is >>>' . $user->id], 200);
+
+        }
+
+    return response()->json(['message' => 'User logged out successfully. The user Id is >>>' . $user->id], 200);
+
+    }else{
+
+        return response()->json(['message' => 'User not found'], 400);
+
+    }
 });
 
 
