@@ -76,11 +76,21 @@ Route::get('api/products' , function(){
 
 // Product Upload Post Request -- not completed yet
 Route::post('api/dashboard/product-upload', function(Request $request){
+            $request->validate([
+                'admin_email' => 'required',
+                'product_name' => 'required',
+                'description' => 'required',
+                'price' => 'required',
+                'category' => 'required',
+                'brand' => 'required',
+                'instock_amount' => 'required',
+                'images' => 'required',
+            ]);
 
             // Admin Check through session data
-            $admin_check = session()->get('admin');
+            $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$request->admin_email]);
 
-            if($admin_check !== null){
+            if(count($admin_check) > 0){
 
             // These variables will get filled through the foreach loop below
             $product_images = [];
@@ -159,7 +169,8 @@ Route::post('api/dashboard/product-upload', function(Request $request){
         return response()->json(['message' => 'No files were uploaded'], 400);
 
     }else{
-        return response()->json(['message' => 'Admin not found. Thus the upload request has been denied.'], 200);
+
+        return response()->json(['message' => 'Admin not found. Thus the upload request has been denied.' ], 200);
     }
         });
 
@@ -397,7 +408,15 @@ Route::get('/auth/redirect', function () {
             return Socialite::driver('github')->redirect();
         });
 
-        Route::get('/auth/callback', function () {
+
+
+
+
+
+
+
+// Github Login Redirect and data processing
+Route::get('/auth/callback', function () {
             $githubUser = Socialite::driver('github')->user();
 
             $user = User::firstOrCreate([
@@ -413,15 +432,6 @@ Route::get('/auth/redirect', function () {
             ]);
 
             Auth::login($user , true);
-
-            // Doing Admin confirmation based on email address
-            $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$githubUser->email]);
-
-            if(count($admin_check) > 0){
-               // Setting Session
-                session(['admin' => $githubUser->email]);
-
-            }
 
             // return redirect('http://localhost:3000/');
             return redirect('http://localhost:3000/github-login/' . $user->id);
@@ -546,6 +556,7 @@ Route::post('api/get_github_info', function (Request $request) {
 
 
         $user = User::where('id', $request->laravel_id)->first();
+
 
         return response()->json(['email' => $user->email], 200);
 
