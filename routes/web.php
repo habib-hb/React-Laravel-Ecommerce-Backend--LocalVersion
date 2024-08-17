@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Hash;
 
 
 
@@ -185,6 +186,20 @@ Route::post('api/dashboard/product-upload', function(Request $request){
 // Product Update Post Request -- not completed yet
 Route::post('api/dashboard/product_update', function(Request $request){
 
+
+    $request->validate([
+        'user_email' => 'required',
+    ]);
+
+
+    // Admin Validation Proceedure
+    $user_email = $request->user_email;
+
+    $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$user_email]);
+
+    if(count($admin_check) > 0){
+
+
     // These variables will get filled through the foreach loop below
     $product_images = [];
     $product_variants = [];
@@ -263,11 +278,14 @@ Route::post('api/dashboard/product_update', function(Request $request){
         }
     }
 
-    return response()->json(['message' => 'Files uploaded successfully'], 200);
+    return response()->json(['message' => 'Admin found. Thus the upload request has been allowed. The admin email is >>> ' . $user_email], 200);
+
+    }else{
+        return response()->json(['message' => 'Admin not found. Thus the upload request has been denied.' ], 400);
+    }
 
 
-    // When file is not uploaded
-    return response()->json(['message' => 'No files were uploaded'], 400);
+
     });
 
 
@@ -279,7 +297,14 @@ Route::post('api/dashboard/product_update', function(Request $request){
 
 
 // Deleting the specified product
-Route::get('api/dashboard/product_delete/{id}', function($id){
+Route::get('api/dashboard/product_delete/{id}', function($id, Request $request){
+
+    $user_email = $request->query('email');
+
+    $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$user_email]);
+
+    if(count($admin_check) > 0){
+
 
     DB::table('products')->where('id', $id)->delete();
     DB::table('product_category')->where('product_id', $id)->delete();
@@ -287,9 +312,17 @@ Route::get('api/dashboard/product_delete/{id}', function($id){
     DB::table('product_image_and_color')->where('product_id', $id)->delete();
     DB::table('product_reviews')->where('product_id', $id)->delete();
 
-        //    // Redirect to the delete panel
-        //    return redirect('http://localhost:3000/product_delete');
-    return response()->json(['message' => 'Product deleted successfully'], 200);
+
+        return response()->json(['message' => 'Product deleted successfully from the database. The admin email is >>> ' . $user_email], 200);
+
+
+    }else{
+
+        return response()->json(['message' => 'Admin not found. Thus the delete request has been denied.' ], 400);
+
+    }
+
+
 
 });
 
@@ -447,7 +480,7 @@ Route::get('/auth/callback', function () {
 
 
 
-// Signing In Users with Credentials
+// Signing / register In Users with Credentials
 Route::post('auth/user/create', function (Request $request) {
 
             $request->validate([
@@ -489,6 +522,30 @@ Route::post('auth/user/create', function (Request $request) {
             return redirect('http://127.0.0.1:8000/');
 
 
+        });
+
+
+
+
+
+
+
+
+
+Route::post('/api/login', function (Request $request) {
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
+
+            if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+                $user = Auth::user();
+                return response()->json(['message' => 'Login successful', 'user' => $user], 200);
+            } else {
+                return response()->json(['message' => 'Invalid credentials'], 401);
+            }
+
+           
         });
 
 
@@ -629,10 +686,22 @@ Route::post('api/dashboard/profile_picture_upload' , function(Request $request){
 
 
 
-Route::get('api/dashboard/comment_delete/{comment_id}' , function($comment_id){
+Route::get('api/dashboard/comment_delete/{comment_id}' , function($comment_id , Request $request){
+
+    // Checking if the user is an Admin or not
+    $user_email = $request->query('email');
+
+    $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$user_email]);
+
+    if(count($admin_check) > 0){
 
     DB::table('product_reviews')->where('review_id', $comment_id)->delete();
-    return response()->json(['message' => 'Comment deleted successfully'], 200);
+
+    return response()->json(['message' => 'Comment deleted successfully. The Admin email is >>> ' . $user_email], 200);
+
+    }else{
+        return response()->json(['message' => 'Admin not found. Thus the delete request has been denied.'], 400);
+    }
 
 });
 
@@ -644,9 +713,24 @@ Route::get('api/dashboard/comment_delete/{comment_id}' , function($comment_id){
 
 
 
-Route::get('api/customers' , function(){
+Route::get('api/customers' , function(Request $request){
+
+    // Admin Checking Functionality
+    $user_email = $request->query('email');
+
+    $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$user_email]);
+
+    if(count($admin_check) > 0){
+
     $customer = DB::select('SELECT * FROM product_customers LEFT JOIN users ON product_customers.customer_id = users.id');
+
     return response(Json::encode($customer));
+
+    }else{
+
+        return response()->json(['message' => 'Admin not found. Thus the request for the data has been denied.'], 400);
+
+    }
 });
 
 
@@ -705,6 +789,8 @@ Route::post('api/logout', function (Request $request) {
 
     }
 });
+
+
 
 
 require __DIR__.'/auth.php';
