@@ -545,7 +545,7 @@ Route::post('/api/login', function (Request $request) {
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
 
-           
+
         });
 
 
@@ -788,6 +788,136 @@ Route::post('api/logout', function (Request $request) {
         return response()->json(['message' => 'User not found'], 400);
 
     }
+});
+
+
+
+
+
+
+
+
+
+Route::get('api/admins' , function(Request $request){
+
+    $user_email = $request->query('email');
+
+    // Checking if the user is an Admin or not
+    $admin_check = DB::select('SELECT * from admins WHERE admins.admin_email = ?', [$user_email]);
+
+    if(count($admin_check) > 0){
+
+    $admin = DB::select('SELECT * FROM admins LEFT JOIN product_customers ON admins.user_id = product_customers.customer_id');
+
+    return response(Json::encode($admin));
+
+    }else{
+
+        return response()->json(['message' => 'Admin not found. Thus the request for the data has been denied.'], 400);
+
+    }
+});
+
+
+
+
+
+
+
+
+
+Route::get('api/dashboard/admin_delete/{admin_id}' , function($admin_id , Request $request){
+
+    $user_email = $request->query('email');
+
+    // Checking if the user is an Admin or not
+    $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$user_email]);
+
+    if(count($admin_check) > 0){
+    DB::table('admins')->where('user_id', $admin_id)->delete();
+
+    return response()->json(['message' => 'Admin deleted successfully'], 200);
+
+    }else{
+        return response()->json(['message' => 'Admin not found. Thus the delete request has been denied.'], 400);
+    }
+
+});
+
+
+
+
+
+
+
+
+
+
+Route::get('api/add_admin_get_customers' , function(Request $request){
+
+    $user_email = $request->query('email');
+
+    // Checking if the user is an Admin or not
+    $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$user_email]);
+
+    if(count($admin_check) > 0){
+
+    $admin = DB::select('SELECT * FROM product_customers LEFT JOIN admins ON admins.user_id = product_customers.customer_id LEFT JOIN users ON product_customers.customer_id = users.id');
+
+    return response(Json::encode($admin));
+
+    }else{
+
+        return response()->json(['message' => 'Admin not found. Thus the request for the data has been denied.'], 400);
+
+    }
+
+
+});
+
+
+
+
+
+
+
+
+
+
+Route::post('api/dashboard/add_admin_insert_customer' , function(Request $request){
+
+    $request->validate([
+        'targeted_customer_id' => 'required',
+        'admin_email' => 'required',
+    ]);
+
+    // Checking if the user is an Admin or not
+    $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$request->admin_email]);
+
+    if(count($admin_check) > 0){
+
+
+            $targeted_customer = DB::select('SELECT * FROM product_customers LEFT JOIN users ON product_customers.customer_id = users.id WHERE customer_id = ?', [$request->targeted_customer_id]);
+
+            if(count($targeted_customer) > 0){
+
+                DB::table('admins')->insert(['user_id' => $targeted_customer[0]->customer_id,
+                                            'admin_email' => $targeted_customer[0]->email,
+                                            'admin_type' => 'all'
+                                            ]);
+
+                return response()->json(['message' => 'Admin added successfully'], 200);
+
+            }else{
+
+                return response()->json(['message' => 'Customer not found. Thus the request for the data has been denied.'], 400);
+
+            }
+
+    }else{
+        return response()->json(['message' => 'Admin not found. Thus the request for the data has been denied.'], 400);
+    }
+
 });
 
 
