@@ -923,4 +923,43 @@ Route::post('api/dashboard/add_admin_insert_customer' , function(Request $reques
 
 
 
+
+
+
+
+
+Route::post('api/dashboard/order_placement' , function(Request $request){
+
+    $request->validate([
+        'ordered_products' => 'required',
+        'orderer_email' => 'required',
+    ]);
+
+    $ordered_products = $request->ordered_products;
+
+    $orderer_email = $request->orderer_email;
+
+
+    // Extracting User Data
+    $user = DB::table('users')->where('email', $orderer_email)->first();
+    $user_id = $user->id;
+
+    if($user){
+
+        DB::table('orders')->insert(['user_id' => $user_id,
+                                     'user_email' => $orderer_email,
+                                     'orders_data' => $ordered_products]);
+
+        return response()->json(['message' => 'Order placed successfully'], 200);
+
+    }else{
+
+        return response()->json(['message' => 'User not found. Thus the request for the data has been denied.'], 400);
+
+    }
+});
+
+
+
+
 require __DIR__.'/auth.php';
