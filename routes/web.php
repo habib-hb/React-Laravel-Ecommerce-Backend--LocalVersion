@@ -531,7 +531,7 @@ Route::post('auth/user/create', function (Request $request) {
 
 
 
-
+// User Login
 Route::post('/api/login', function (Request $request) {
             $request->validate([
                 'email' => 'required|email',
@@ -685,7 +685,7 @@ Route::post('api/dashboard/profile_picture_upload' , function(Request $request){
 
 
 
-
+// Deleting a comment as an admin from the Admin Dashboard
 Route::get('api/dashboard/comment_delete/{comment_id}' , function($comment_id , Request $request){
 
     // Checking if the user is an Admin or not
@@ -712,7 +712,7 @@ Route::get('api/dashboard/comment_delete/{comment_id}' , function($comment_id , 
 
 
 
-
+// Getting all the customers for the Admin Dashboard
 Route::get('api/customers' , function(Request $request){
 
     // Admin Checking Functionality
@@ -740,7 +740,7 @@ Route::get('api/customers' , function(Request $request){
 
 
 
-
+// Deleting a customer through the Admin Dashboard
 Route::get('api/dashboard/customer_delete/{customer_id}' , function($customer_id){
 
     DB::table('product_customers')->where('customer_id', $customer_id)->delete();
@@ -758,7 +758,7 @@ Route::get('api/dashboard/customer_delete/{customer_id}' , function($customer_id
 
 
 
-
+// User Logout functionality
 Route::post('api/logout', function (Request $request) {
     $request->validate([
         'email' => 'required',
@@ -797,7 +797,7 @@ Route::post('api/logout', function (Request $request) {
 
 
 
-
+// Getting all Admins data for the Admin Dashboard
 Route::get('api/admins' , function(Request $request){
 
     $user_email = $request->query('email');
@@ -825,7 +825,7 @@ Route::get('api/admins' , function(Request $request){
 
 
 
-
+// Deleting an Admin
 Route::get('api/dashboard/admin_delete/{admin_id}' , function($admin_id , Request $request){
 
     $user_email = $request->query('email');
@@ -852,7 +852,7 @@ Route::get('api/dashboard/admin_delete/{admin_id}' , function($admin_id , Reques
 
 
 
-
+// Getting all the customers data who are not admin, to be displayed on the admin dashboard as potential admins
 Route::get('api/add_admin_get_customers' , function(Request $request){
 
     $user_email = $request->query('email');
@@ -883,7 +883,7 @@ Route::get('api/add_admin_get_customers' , function(Request $request){
 
 
 
-
+// Adding an Admin who was previously a customer
 Route::post('api/dashboard/add_admin_insert_customer' , function(Request $request){
 
     $request->validate([
@@ -927,7 +927,7 @@ Route::post('api/dashboard/add_admin_insert_customer' , function(Request $reques
 
 
 
-
+// Placing an order from usual users
 Route::post('api/dashboard/order_placement' , function(Request $request){
 
     $request->validate([
@@ -966,7 +966,7 @@ Route::post('api/dashboard/order_placement' , function(Request $request){
 
 
 
-
+// Retriving all the orders data for the admin dashboard
 Route::get('api/dashboard/all_orders_data' , function(){
 
     $all_orders = DB::select('SELECT * FROM orders LEFT JOIN users ON orders.user_id = users.id LEFT JOIN product_customers ON product_customers.customer_id = orders.user_id');
@@ -981,6 +981,64 @@ Route::get('api/dashboard/all_orders_data' , function(){
 
     }
 
+});
+
+
+
+
+
+
+
+
+
+
+// Updating the customer order data based on the Admin's 'Delivered' request
+Route::post('api/dashboard/order_delivered', function(Request $request){
+
+    $request->validate([
+        'order_id' => 'required',
+        'orders_data' => 'required',
+    ]);
+
+    //Updating the orders table
+    try{
+
+        DB::table('orders')->where('order_id', $request->order_id)->update(['orders_data' => $request->orders_data]);
+
+        return response()->json(['message' => 'Order updated successfully.'], 200);
+
+    }catch(Exception $e){
+        return response()->json(['message' => 'Something went wrong.'], 400);
+    }
+
+});
+
+
+
+
+
+
+
+
+
+// Deleting an order as an admin from the Admin Dashboard
+Route::post('api/dashboard/delete_order', function(Request $request){
+
+    $request->validate([
+        'order_id' => 'required',
+    ]);
+
+    try{
+
+        DB::table('orders')->where('order_id', $request->order_id)->delete();
+
+        return response()->json(['message' => 'Order deleted successfully.'], 200);
+
+    }catch(Exception $e){
+
+        return response()->json(['message' => 'Something went wrong.'], 400);
+
+    }
 });
 
 
