@@ -962,4 +962,28 @@ Route::post('api/dashboard/order_placement' , function(Request $request){
 
 
 
+
+
+
+
+
+Route::get('api/dashboard/all_orders_data' , function(){
+
+    $all_orders = DB::select('SELECT * FROM orders LEFT JOIN users ON orders.user_id = users.id LEFT JOIN product_customers ON product_customers.customer_id = orders.user_id');
+
+    if(count($all_orders) > 0){
+
+    return response(Json::encode($all_orders));
+
+    }else{
+
+        return response()->json(['message' => 'No orders found.'], 400);
+
+    }
+
+});
+
+
+
+
 require __DIR__.'/auth.php';
