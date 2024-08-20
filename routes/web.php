@@ -175,6 +175,8 @@ Route::post('api/dashboard/product-upload', function(Request $request){
     }
         });
 
+        
+
 
 
 
@@ -325,6 +327,8 @@ Route::get('api/dashboard/product_delete/{id}', function($id, Request $request){
 
 
 });
+
+
 
 
 
@@ -946,11 +950,26 @@ Route::post('api/dashboard/order_placement' , function(Request $request){
 
     if($user){
 
-        DB::table('orders')->insert(['user_id' => $user_id,
-                                     'user_email' => $orderer_email,
-                                     'orders_data' => $ordered_products]);
+            // Checking if previous data exists regarding this order
+            $order_check = DB::select('SELECT * FROM orders WHERE user_id = ?', [$user_id]);
 
-        return response()->json(['message' => 'Order placed successfully'], 200);
+            if(count($order_check) > 0){
+
+                DB::table('orders')->where('user_id', $user_id)->update(['orders_data' => $ordered_products]);
+
+                return response()->json(['message' => 'Order updated successfully'], 200);
+
+            }else{
+
+            DB::table('orders')->insert(['user_id' => $user_id,
+                                        'user_email' => $orderer_email,
+                                        'orders_data' => $ordered_products]);
+
+            return response()->json(['message' => 'Order placed successfully'], 200);
+
+            }
+
+
 
     }else{
 
