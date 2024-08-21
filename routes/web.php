@@ -175,7 +175,7 @@ Route::post('api/dashboard/product-upload', function(Request $request){
     }
         });
 
-        
+
 
 
 
@@ -1058,6 +1058,99 @@ Route::post('api/dashboard/delete_order', function(Request $request){
         return response()->json(['message' => 'Something went wrong.'], 400);
 
     }
+});
+
+
+
+
+
+
+
+
+// Uploading Banner Picture From Admin Dashboard
+Route::post('api/dashboard/banner_picture_upload' , function(Request $request){
+
+    $request->validate([
+        'admin_email' => 'required',
+        'banner_picture' => 'required',
+    ]);
+
+
+
+    $banner_picture = $request->banner_picture;
+    $banner_picture_name = time() . "--" . $banner_picture->getClientOriginalName();
+    $banner_picture->storeAs('images', $banner_picture_name, 'public');
+        // $profile_picture_url = asset('storage/images/' . $profile_picture_name);
+
+    // Profile Picture Url
+    $banner_picture_storage_url = Storage::url('images/' . $banner_picture_name);
+
+    // Profile Picture Full Url
+    $banner_picture_full_url = asset($banner_picture_storage_url);
+            // $profile_picture_full_url = 'http://127.0.0.1:8000' . $profile_picture_storage_url;
+
+    // Varifing the Admin
+    $admin_check= DB::select('SELECT * from admins WHERE admin_email = ?', [$request->admin_email]);
+    if(count($admin_check) > 0){
+
+           $database_check = DB::select('SELECT * from banner');
+
+           if(count($database_check) > 0){
+
+                DB::table('banner')
+                ->where('title', $database_check[0]->title)
+                ->update([
+                   'file_url' => $banner_picture_full_url
+                ]);
+
+           }else{
+
+                DB::table('banner')
+                ->insert([
+                    'title' => 'banner',
+                   'file_url' => $banner_picture_full_url
+                ]);
+
+           }
+
+           response()->json(['message' => 'Banner updated successfully.'], 200);
+
+
+    }else{
+
+           response()->json(['message' => 'Admin not found. Thus the update request has been denied.'], 400);
+
+    }
+
+
+
+
+});
+
+
+
+
+
+
+
+
+//Loading the banner image url for the front end
+Route::get('api/dashboard/get_banner_picture' , function(){
+
+    $banner_data = DB::select('SELECT * from banner');
+
+    if(count($banner_data) > 0){
+
+         $banner_url = $banner_data[0]->file_url;
+
+         return response()->json(['banner_url' => $banner_url], 200);
+
+    }else{
+
+        return response()->json(['message' => 'Banner not found.'], 400);
+
+    }
+
 });
 
 
