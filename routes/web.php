@@ -62,8 +62,11 @@ Route::middleware('auth')->group(function () {
 
 // Getting Product Data From DB
 Route::get('api/products' , function(){
+
     $product = DB::select('SELECT * FROM products LEFT JOIN product_category ON products.id = product_category.product_id LEFT JOIN product_image_and_color ON products.id = product_image_and_color.product_id LEFT JOIN product_reviews ON products.id = product_reviews.product_id LEFT JOIN product_stock ON products.id = product_stock.product_id LEFT JOIN product_customers ON product_reviews.customer_id = product_customers.customer_id');
+
     return response(Json::encode($product));
+
 });
 
 
@@ -471,7 +474,7 @@ Route::get('/auth/callback', function () {
             Auth::login($user , true);
 
             // return redirect('http://localhost:3000/');
-            return redirect('http://localhost:3000/github-login/' . $user->id);
+            return redirect('http://localhost:3000/github-login/laravel_id?laravel_id=' . $user->id);
             // return redirect('http://127.0.0.1:8000/');
             // return redirect('/');
         });
@@ -986,7 +989,15 @@ Route::post('api/dashboard/order_placement' , function(Request $request){
 
 
 // Retriving all the orders data for the admin dashboard
-Route::get('api/dashboard/all_orders_data' , function(){
+Route::get('api/dashboard/all_orders_data' , function(Request $request){
+
+    // Extracting the email from query
+    $user_email = $request->query('email');
+
+    // Admin Check
+    $admin_check = DB::select('SELECT * from admins WHERE admin_email = ?', [$user_email]);
+
+    if(count($admin_check) > 0){
 
     $all_orders = DB::select('SELECT * FROM orders LEFT JOIN users ON orders.user_id = users.id LEFT JOIN product_customers ON product_customers.customer_id = orders.user_id');
 
@@ -998,6 +1009,10 @@ Route::get('api/dashboard/all_orders_data' , function(){
 
         return response()->json(['message' => 'No orders found.'], 400);
 
+    }
+
+    }else{
+        return response()->json(['message' => 'Admin not found. Thus the request for the data has been denied.'], 400);
     }
 
 });
@@ -1076,6 +1091,11 @@ Route::post('api/dashboard/banner_picture_upload' , function(Request $request){
     ]);
 
 
+        // Varifing the Admin
+        $admin_check= DB::select('SELECT * from admins WHERE admin_email = ?', [$request->admin_email]);
+
+        if(count($admin_check) > 0){
+
 
     $banner_picture = $request->banner_picture;
     $banner_picture_name = time() . "--" . $banner_picture->getClientOriginalName();
@@ -1089,9 +1109,7 @@ Route::post('api/dashboard/banner_picture_upload' , function(Request $request){
     $banner_picture_full_url = asset($banner_picture_storage_url);
             // $profile_picture_full_url = 'http://127.0.0.1:8000' . $profile_picture_storage_url;
 
-    // Varifing the Admin
-    $admin_check= DB::select('SELECT * from admins WHERE admin_email = ?', [$request->admin_email]);
-    if(count($admin_check) > 0){
+
 
            $database_check = DB::select('SELECT * from banner');
 
@@ -1113,12 +1131,12 @@ Route::post('api/dashboard/banner_picture_upload' , function(Request $request){
 
            }
 
-           response()->json(['message' => 'Banner updated successfully.'], 200);
+          return response()->json(['message' => 'Banner updated successfully.'], 200);
 
 
     }else{
 
-           response()->json(['message' => 'Admin not found. Thus the update request has been denied.'], 400);
+          return response()->json(['message' => 'Admin not found. Thus the update request has been denied.'], 400);
 
     }
 
@@ -1151,6 +1169,21 @@ Route::get('api/dashboard/get_banner_picture' , function(){
 
     }
 
+});
+
+
+Route::post('api/admin_varification' , function(Request $request){
+    
+    $request->validate([
+        'admin_email' => 'required',
+    ]);
+
+    $admin_check= DB::select('SELECT * from admins WHERE admin_email = ?', [$request->admin_email]);
+    if(count($admin_check) > 0){
+        return response()->json(['message' => 'Admin verified.'], 200);
+    }else{
+        return response()->json(['message' => 'Admin not found.'], 400);
+    }
 });
 
 
