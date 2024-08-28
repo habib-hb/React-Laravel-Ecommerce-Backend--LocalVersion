@@ -1172,8 +1172,17 @@ Route::get('api/dashboard/get_banner_picture' , function(){
 });
 
 
+
+
+
+
+
+
+
+
+// Admin Varification
 Route::post('api/admin_varification' , function(Request $request){
-    
+
     $request->validate([
         'admin_email' => 'required',
     ]);
@@ -1185,6 +1194,9 @@ Route::post('api/admin_varification' , function(Request $request){
         return response()->json(['message' => 'Admin not found.'], 400);
     }
 });
+
+
+
 
 
 
